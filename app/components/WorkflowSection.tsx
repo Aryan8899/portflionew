@@ -78,6 +78,7 @@ export default function WorkflowSection() {
         width: "100%",
         backgroundColor: "#E3E3FF",
         borderTop: "1px solid #1a1a2e",
+        borderBottom: "1px solid #1a1a2e",
         padding: "80px 0 60px",
         fontFamily: "'Inter', 'DM Sans', sans-serif",
         overflow: "hidden",
