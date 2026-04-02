@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 const FONT = "'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif";
 
 /* ── Icons ── */
@@ -55,35 +57,83 @@ const CARDS = [
         title: "Strategy & Planning",
         description: "Streamline your campaigns with tools that improve engagement, boost visibility, and help you connect with your audience.",
         icon: <PuzzleIcon />,
-        bgColor: "#eadeff", // Light purple matches screenshot
+        bgColor: "#eadeff",
     },
     {
         title: "User Research",
         description: "Simplify project workflows with organized tools and strategies designed to keep your team aligned and your goals on track.",
         icon: <SearchIcon />,
-        bgColor: "#eaffd9", // Light green/yellow matches screenshot
+        bgColor: "#eaffd9",
     },
     {
         title: "Web Design",
         description: "Gain valuable insights into user behavior, website performance, and key business metrics to optimize your digital presence.",
         icon: <BrowserIcon />,
-        bgColor: "#ffe5fb", // Light pink matches screenshot
+        bgColor: "#ffe5fb",
     },
     {
         title: "Brand Design",
         description: "Understand your market with precise data analysis and deep customer insights that guide your decision-making processes.",
         icon: <BrandIcon />,
-        bgColor: "#e0f0ff", // Light blue matches screenshot
+        bgColor: "#e0f0ff",
     }
 ];
 
 export default function ServicesSection() {
+    const headerRef = useRef<HTMLDivElement>(null);
+    const badgeRef = useRef<HTMLDivElement>(null);
+    const titleRef = useRef<HTMLHeadingElement>(null);
+    const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const btnRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    const el = entry.target as HTMLElement;
+                    const delay = el.dataset.delay ? parseInt(el.dataset.delay) : 0;
+
+                    setTimeout(() => {
+                        el.style.opacity = "1";
+                        el.style.transform = "translateY(0)";
+                    }, delay);
+
+                    // Badge and title stagger after header
+                    if (el === headerRef.current) {
+                        setTimeout(() => {
+                            if (badgeRef.current) {
+                                badgeRef.current.style.opacity = "1";
+                                badgeRef.current.style.transform = "translateY(0)";
+                            }
+                        }, 100);
+                        setTimeout(() => {
+                            if (titleRef.current) {
+                                titleRef.current.style.opacity = "1";
+                                titleRef.current.style.transform = "translateY(0)";
+                            }
+                        }, 220);
+                    }
+
+                    observer.unobserve(el);
+                });
+            },
+            { threshold: 0.15 }
+        );
+
+        if (headerRef.current) observer.observe(headerRef.current);
+        if (btnRef.current) observer.observe(btnRef.current);
+        cardRefs.current.forEach((card) => { if (card) observer.observe(card); });
+
+        return () => observer.disconnect();
+    }, []);
+
     return (
         <section style={{
             width: "100%",
             background: "#ffffff",
             fontFamily: FONT,
-            padding: "130px 0 140px",
+            padding: "clamp(64px, 10vw, 130px) 0 clamp(80px, 10vw, 140px)",
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
@@ -91,8 +141,10 @@ export default function ServicesSection() {
             overflow: "hidden",
             boxSizing: "border-box"
         }}>
-            
+
             <style>{`
+                @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700;800&display=swap');
+
                 @keyframes float-lightning {
                     0%, 100% { transform: translateY(0) rotate(0deg); }
                     50% { transform: translateY(-8px) rotate(-6deg); }
@@ -101,31 +153,119 @@ export default function ServicesSection() {
                     0%, 100% { transform: translateY(0) rotate(0deg); }
                     50% { transform: translateY(-10px) rotate(8deg); }
                 }
+
+                .services-card-icon-circle {
+                    width: 60px;
+                    height: 60px;
+                    background: #ffffff;
+                    border: 1.5px solid #1a1a3e;
+                    border-radius: 50%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    flex-shrink: 0;
+                    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+                }
+                .services-card:hover .services-card-icon-circle {
+                    transform: rotate(10deg) scale(1.1);
+                }
+                .services-card:hover {
+                    transform: translateY(-6px) !important;
+                    box-shadow: 0 12px 32px rgba(26, 26, 62, 0.1) !important;
+                }
+
+                @media (max-width: 900px) {
+                    .services-cards-grid {
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: 24px !important;
+                    }
+                }
+                @media (max-width: 640px) {
+                    .services-cards-grid {
+                        grid-template-columns: 1fr !important;
+                        gap: 20px !important;
+                        padding: 0 16px !important;
+                        margin-bottom: 48px !important;
+                    }
+                    .services-card {
+                        padding: 24px 20px !important;
+                        gap: 16px !important;
+                    }
+                    .services-card-icon-circle {
+                        width: 48px !important;
+                        height: 48px !important;
+                    }
+                    .services-float-lightning {
+                        left: 8px !important;
+                        top: 0 !important;
+                    }
+                    .services-float-sparkles {
+                        right: 8px !important;
+                        top: -10px !important;
+                        transform: scale(0.8) !important;
+                        transform-origin: top right !important;
+                    }
+                    .services-btn-link {
+                        padding: 12px 28px !important;
+                        font-size: 0.84rem !important;
+                    }
+                }
             `}</style>
 
             {/* Header Content Wrapper */}
-            <div style={{
-                position: "relative",
-                marginBottom: "80px",
-                textAlign: "center",
-                width: "100%",
-                maxWidth: "800px",
-                padding: "0 24px",
-                boxSizing: "border-box",
-            }}>
-                
+            <div
+                ref={headerRef}
+                style={{
+                    position: "relative",
+                    marginBottom: "80px",
+                    textAlign: "center",
+                    width: "100%",
+                    maxWidth: "800px",
+                    padding: "0 24px",
+                    boxSizing: "border-box",
+                    opacity: 0,
+                    transform: "translateY(32px)",
+                    transition: "opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1)",
+                }}
+            >
                 {/* Floating Lightning */}
-                <div style={{ position: "absolute", left: "20px", top: "10px", animation: "float-lightning 3.5s ease-in-out infinite" }}>
+                <div
+                    className="services-float-lightning"
+                    style={{
+                        position: "absolute",
+                        left: "20px",
+                        top: "10px",
+                        animation: "float-lightning 3.5s ease-in-out infinite"
+                    }}
+                >
                     <LightningIcon />
                 </div>
-                
+
                 {/* Floating Sparkles */}
-                <div style={{ position: "absolute", right: "20px", top: "-20px", animation: "float-sparkles 4s ease-in-out infinite" }}>
+                <div
+                    className="services-float-sparkles"
+                    style={{
+                        position: "absolute",
+                        right: "20px",
+                        top: "-20px",
+                        animation: "float-sparkles 4s ease-in-out infinite"
+                    }}
+                >
                     <SparklesIcon />
                 </div>
 
                 {/* Badge */}
-                <div style={{ display: "flex", justifyContent: "center", marginBottom: "32px" }}>
+                <div
+                    ref={badgeRef}
+                    style={{
+                        display: "flex",
+                        justifyContent: "center",
+                        marginBottom: "32px",
+                        opacity: 0,
+                        transform: "translateY(16px)",
+                        transition: "opacity 0.5s ease, transform 0.5s ease",
+                    }}
+                >
                     <div style={{
                         display: "flex", alignItems: "center", gap: "8px",
                         background: "#e0f0ff", border: "1.5px solid #1a1a3e",
@@ -140,59 +280,63 @@ export default function ServicesSection() {
                 </div>
 
                 {/* Title */}
-                <h2 style={{
-                    fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)",
-                    fontWeight: 800,
-                    color: "#1a1a3e",
-                    lineHeight: 1.25,
-                    margin: 0,
-                    letterSpacing: "-0.01em",
-                }}>
+                <h2
+                    ref={titleRef}
+                    style={{
+                        fontSize: "clamp(1.8rem, 3.5vw, 2.6rem)",
+                        fontWeight: 800,
+                        color: "#1a1a3e",
+                        lineHeight: 1.25,
+                        margin: 0,
+                        letterSpacing: "-0.01em",
+                        opacity: 0,
+                        transform: "translateY(20px)",
+                        transition: "opacity 0.6s ease, transform 0.6s ease",
+                    }}
+                >
                     The service I offer is specifically<br />
                     designed to meet your needs.
                 </h2>
             </div>
 
             {/* Cards Grid */}
-            <div style={{
-                display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
-                gap: "40px",
-                width: "100%",
-                maxWidth: "1040px",
-                padding: "0 24px",
-                marginBottom: "80px",
-                boxSizing: "border-box",
-            }}>
+            <div
+                className="services-cards-grid"
+                style={{
+                    display: "grid",
+                    gridTemplateColumns: "repeat(auto-fit, minmax(360px, 1fr))",
+                    gap: "40px",
+                    width: "100%",
+                    maxWidth: "1040px",
+                    padding: "0 24px",
+                    marginBottom: "80px",
+                    boxSizing: "border-box",
+                }}
+            >
                 {CARDS.map((card, idx) => (
-                    <div key={idx} style={{
-                        background: card.bgColor,
-                        border: "1.5px solid #1a1a3e",
-                        borderRadius: "20px",
-                        padding: "36px 32px",
-                        display: "flex",
-                        alignItems: "flex-start",
-                        gap: "24px",
-                        boxSizing: "border-box",
-                        boxShadow: "0 4px 14px rgba(0,0,0,0.03)",
-                        transition: "transform 0.3s ease",
-                        cursor: "default"
-                    }}
-                    onMouseEnter={(e) => e.currentTarget.style.transform = "translateY(-6px)"}
-                    onMouseLeave={(e) => e.currentTarget.style.transform = "translateY(0)"}
+                    <div
+                        key={idx}
+                        className="services-card"
+                        ref={(el) => { cardRefs.current[idx] = el; }}
+                        data-delay={idx * 100}
+                        style={{
+                            background: card.bgColor,
+                            border: "1.5px solid #1a1a3e",
+                            borderRadius: "20px",
+                            padding: "36px 32px",
+                            display: "flex",
+                            alignItems: "flex-start",
+                            gap: "24px",
+                            boxSizing: "border-box",
+                            boxShadow: "0 4px 14px rgba(0,0,0,0.03)",
+                            transition: "transform 0.3s ease, box-shadow 0.3s ease, opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1)",
+                            cursor: "default",
+                            opacity: 0,
+                            transform: "translateY(36px)",
+                        }}
                     >
                         {/* Icon circle */}
-                        <div style={{
-                            width: "60px",
-                            height: "60px",
-                            background: "#ffffff",
-                            border: "1.5px solid #1a1a3e",
-                            borderRadius: "50%",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            flexShrink: 0,
-                        }}>
+                        <div className="services-card-icon-circle">
                             {card.icon}
                         </div>
                         {/* Text Content */}
@@ -220,42 +364,57 @@ export default function ServicesSection() {
             </div>
 
             {/* Bottom Button */}
-            <div style={{ position: "relative", display: "inline-block", cursor: "pointer", marginTop: "10px" }}
-                 onMouseEnter={(e) => {
-                     (e.currentTarget.children[0] as HTMLElement).style.transform = "translate(4px, 4px)";
-                     (e.currentTarget.children[1] as HTMLElement).style.transform = "translateY(-1px)";
-                 }}
-                 onMouseLeave={(e) => {
-                     (e.currentTarget.children[0] as HTMLElement).style.transform = "translate(6px, 6px)";
-                     (e.currentTarget.children[1] as HTMLElement).style.transform = "translateY(0)";
-                 }}
+            <div
+                ref={btnRef}
+                style={{
+                    position: "relative",
+                    display: "inline-block",
+                    cursor: "pointer",
+                    marginTop: "10px",
+                    opacity: 0,
+                    transform: "translateY(20px)",
+                    transition: "opacity 0.6s ease, transform 0.6s ease",
+                }}
+                onMouseEnter={(e) => {
+                    (e.currentTarget.children[0] as HTMLElement).style.transform = "translate(4px, 4px)";
+                    (e.currentTarget.children[1] as HTMLElement).style.transform = "translateY(-1px)";
+                }}
+                onMouseLeave={(e) => {
+                    (e.currentTarget.children[0] as HTMLElement).style.transform = "translate(6px, 6px)";
+                    (e.currentTarget.children[1] as HTMLElement).style.transform = "translateY(0)";
+                }}
             >
                 {/* Shadow Box layer */}
                 <div style={{
                     position: "absolute",
                     top: 0, left: 0, right: 0, bottom: 0,
                     borderRadius: "8px",
-                    background: "#eadeff", /* Pastel purple offset shadow */
+                    background: "#eadeff",
                     border: "1.5px solid #1a1a3e",
                     transform: "translate(6px, 6px)",
                     transition: "transform 0.2s",
                     zIndex: 0,
                 }}></div>
                 {/* Actual Button */}
-                <a href="#" style={{
-                    position: "relative",
-                    zIndex: 1,
-                    display: "inline-block",
-                    background: "#ffffff",
-                    padding: "14px 36px",
-                    borderRadius: "8px",
-                    fontWeight: 700,
-                    color: "#1a1a3e",
-                    textDecoration: "none",
-                    border: "1.5px solid #1a1a3e",
-                    fontSize: "0.88rem",
-                    transition: "transform 0.2s",
-                }}>
+                <a
+                    href="#"
+                    className="services-btn-link"
+                    style={{
+                        position: "relative",
+                        zIndex: 1,
+                        display: "inline-block",
+                        background: "#ffffff",
+                        padding: "14px 36px",
+                        borderRadius: "8px",
+                        fontWeight: 700,
+                        color: "#1a1a3e",
+                        textDecoration: "none",
+                        border: "1.5px solid #1a1a3e",
+                        fontSize: "0.88rem",
+                        transition: "transform 0.2s",
+                        fontFamily: FONT,
+                    }}
+                >
                     Check Portfolio
                 </a>
             </div>

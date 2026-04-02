@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { useEffect, useRef } from "react";
 
 const experiences = [
     {
@@ -24,8 +25,62 @@ const experiences = [
 ];
 
 export default function AboutSection() {
+    const sectionRef = useRef<HTMLDivElement>(null);
+    const imageColRef = useRef<HTMLDivElement>(null);
+    const bioColRef = useRef<HTMLDivElement>(null);
+    const leftColRef = useRef<HTMLDivElement>(null);
+    const timelineRef = useRef<HTMLDivElement>(null);
+    const expRefs = useRef<(HTMLDivElement | null)[]>([]);
+    const lineRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    const el = entry.target as HTMLElement;
+                    const delay = el.dataset.delay ? parseInt(el.dataset.delay) : 0;
+                    setTimeout(() => {
+                        el.style.opacity = "1";
+                        el.style.transform = "none";
+                    }, delay);
+                    observer.unobserve(el);
+                });
+            },
+            { threshold: 0.12 }
+        );
+
+        const lineObserver = new IntersectionObserver(
+            (entries) => {
+                entries.forEach((entry) => {
+                    if (!entry.isIntersecting) return;
+                    const el = entry.target as HTMLElement;
+                    setTimeout(() => {
+                        el.style.height = "100%";
+                    }, 400);
+                    lineObserver.unobserve(el);
+                });
+            },
+            { threshold: 0.1 }
+        );
+
+        [imageColRef, bioColRef, leftColRef, timelineRef].forEach((r) => {
+            if (r.current) observer.observe(r.current);
+        });
+        expRefs.current.forEach((el) => {
+            if (el) observer.observe(el);
+        });
+        if (lineRef.current) lineObserver.observe(lineRef.current);
+
+        return () => {
+            observer.disconnect();
+            lineObserver.disconnect();
+        };
+    }, []);
+
     return (
         <section
+            ref={sectionRef}
             style={{
                 width: "100%",
                 boxSizing: "border-box",
@@ -47,22 +102,70 @@ export default function AboutSection() {
                     0%, 100% { transform: translateY(-50%) translateX(0); }
                     50% { transform: translateY(-50%) translateX(-10px); }
                 }
+                @keyframes dotPop {
+                    0% { transform: scale(0); opacity: 0; }
+                    70% { transform: scale(1.3); opacity: 1; }
+                    100% { transform: scale(1); opacity: 1; }
+                }
+                .about-exp-dot { opacity: 0; }
+                .about-exp-dot.popped { animation: dotPop 0.5s cubic-bezier(0.34,1.56,0.64,1) forwards; }
+
+                .about-btn {
+                    border: 1.5px solid #1a1033;
+                    color: #1a1033;
+                    font-size: 12px;
+                    font-weight: 700;
+                    letter-spacing: 0.06em;
+                    padding: 10px 24px;
+                    border-radius: 999px;
+                    cursor: pointer;
+                    background: transparent;
+                    transition: background 0.3s, color 0.3s;
+                }
+                .about-btn:hover { background: #1a1033; color: #fff; }
+
+                .about-image-wrap {
+                    transition: transform 0.4s cubic-bezier(0.34,1.56,0.64,1), box-shadow 0.4s ease;
+                }
+                .about-image-wrap:hover {
+                    transform: translateY(-6px) scale(1.01);
+                    box-shadow: 6px 8px 0 #1a1033;
+                }
+
+                @media (max-width: 900px) {
+                    .about-row1 { flex-direction: column !important; align-items: center !important; gap: 40px !important; }
+                    .about-image-col { width: 300px !important; height: 300px !important; }
+                    .about-bio-col { width: 100% !important; }
+                    .about-row2 { flex-direction: column !important; gap: 32px !important; }
+                    .about-left-col { width: 100% !important; }
+                    .about-hearts { right: 8px !important; top: 12px !important; }
+                    .about-wave { left: -20px !important; }
+                }
+
+                @media (max-width: 640px) {
+                    .about-content-wrapper { padding: 48px 20px 64px !important; }
+                    .about-image-col { width: 260px !important; height: 260px !important; }
+                    .about-badge-circle { width: 88px !important; height: 88px !important; }
+                    .about-timeline-date { width: 110px !important; font-size: 8px !important; }
+                    .about-timeline-line { left: 110px !important; }
+                    .about-row2 { gap: 24px !important; }
+                    .about-hearts { display: none !important; }
+                    .about-wave { display: none !important; }
+                }
             `}</style>
 
-            {/* ─────────────────────────────────────────────
-          Centered content wrapper — this is the key!
-          Everything lives inside this 880px box.
-      ───────────────────────────────────────────── */}
             <div
+                className="about-content-wrapper"
                 style={{
                     maxWidth: 880,
                     margin: "0 auto",
-                    padding: "72px 0 100px",
+                    padding: "72px 24px 100px",
                     position: "relative",
                 }}
             >
-                {/* Hearts — top right of content block */}
+                {/* Hearts */}
                 <div
+                    className="about-hearts"
                     style={{
                         position: "absolute",
                         top: 40,
@@ -83,16 +186,29 @@ export default function AboutSection() {
                     </svg>
                 </div>
 
-                {/* ══════════════════════════════════
-            ROW 1: [image 360px] [gap 48px] [bio]
-        ══════════════════════════════════ */}
-                <div style={{ display: "flex", alignItems: "center", gap: 48, marginBottom: 80 }}>
-
-                    {/* ── Image column ── */}
-                    <div style={{ position: "relative", flexShrink: 0, width: 360, height: 360 }}>
-
-                        {/* Wavy lines LEFT of image */}
+                {/* ROW 1 */}
+                <div
+                    className="about-row1"
+                    style={{ display: "flex", alignItems: "center", gap: 48, marginBottom: 80 }}
+                >
+                    {/* Image column */}
+                    <div
+                        ref={imageColRef}
+                        className="about-image-col"
+                        data-delay="0"
+                        style={{
+                            position: "relative",
+                            flexShrink: 0,
+                            width: 360,
+                            height: 360,
+                            opacity: 0,
+                            transform: "translateX(-40px)",
+                            transition: "opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1)",
+                        }}
+                    >
+                        {/* Wavy lines */}
                         <div
+                            className="about-wave"
                             style={{
                                 position: "absolute",
                                 top: "50%",
@@ -111,6 +227,7 @@ export default function AboutSection() {
 
                         {/* Image Container */}
                         <div
+                            className="about-image-wrap"
                             style={{
                                 width: "100%",
                                 height: "100%",
@@ -123,7 +240,6 @@ export default function AboutSection() {
                                 position: "relative",
                             }}
                         >
-
                             <Image
                                 src="/mewithhead.png"
                                 fill
@@ -132,8 +248,9 @@ export default function AboutSection() {
                             />
                         </div>
 
-                        {/* ── Rotating badge top-right ── */}
+                        {/* Rotating badge */}
                         <div
+                            className="about-badge-circle"
                             style={{
                                 position: "absolute",
                                 top: "4%",
@@ -149,7 +266,6 @@ export default function AboutSection() {
                                 boxShadow: "2px 2px 0 #1a1033",
                             }}
                         >
-                            {/* Spinning text */}
                             <svg
                                 viewBox="0 0 100 100"
                                 style={{
@@ -166,16 +282,27 @@ export default function AboutSection() {
                                     <textPath href="#ba">10+ YEARS OF WORK EXPERIENCE • </textPath>
                                 </text>
                             </svg>
-                            {/* Arrow ↗ */}
                             <svg width="22" height="22" viewBox="0 0 24 24" fill="none" style={{ zIndex: 1 }}>
                                 <path d="M7 17L17 7M17 7H7M17 7v10" stroke="#1a1033" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
                             </svg>
                         </div>
                     </div>
 
-                    {/* ── Bio column ── */}
-                    <div style={{ flex: 1, display: "flex", flexDirection: "column", gap: 16 }}>
-                        {/* * ABOUT pill — outlined */}
+                    {/* Bio column */}
+                    <div
+                        ref={bioColRef}
+                        className="about-bio-col"
+                        data-delay="150"
+                        style={{
+                            flex: 1,
+                            display: "flex",
+                            flexDirection: "column",
+                            gap: 16,
+                            opacity: 0,
+                            transform: "translateX(40px)",
+                            transition: "opacity 0.8s cubic-bezier(0.22,1,0.36,1), transform 0.8s cubic-bezier(0.22,1,0.36,1)",
+                        }}
+                    >
                         <span
                             style={{
                                 alignSelf: "flex-start",
@@ -215,14 +342,24 @@ export default function AboutSection() {
                     </div>
                 </div>
 
-                {/* ══════════════════════════════════
-            ROW 2: [left text 320px] [gap 40px] [timeline]
-            Left col width = same start x as image
-        ══════════════════════════════════ */}
-                <div style={{ display: "flex", alignItems: "flex-start", gap: 40 }}>
-
-                    {/* ── Left column ── */}
-                    <div style={{ flexShrink: 0, width: 320 }}>
+                {/* ROW 2 */}
+                <div
+                    className="about-row2"
+                    style={{ display: "flex", alignItems: "flex-start", gap: 40 }}
+                >
+                    {/* Left column */}
+                    <div
+                        ref={leftColRef}
+                        className="about-left-col"
+                        data-delay="0"
+                        style={{
+                            flexShrink: 0,
+                            width: 320,
+                            opacity: 0,
+                            transform: "translateY(32px)",
+                            transition: "opacity 0.7s cubic-bezier(0.22,1,0.36,1), transform 0.7s cubic-bezier(0.22,1,0.36,1)",
+                        }}
+                    >
                         <h3
                             style={{
                                 fontFamily: "'Playfair Display', serif",
@@ -237,47 +374,62 @@ export default function AboutSection() {
                         <p style={{ color: "#4a4170", fontSize: "0.85rem", lineHeight: 1.75, marginBottom: 28, maxWidth: 260 }}>
                             I have had the pleasure to work with companies across a variety of industries. I'm always interested in new, exciting and challenging adventures.
                         </p>
-                        <button
-                            style={{
-                                border: "1.5px solid #1a1033",
-                                color: "#1a1033",
-                                fontSize: 12,
-                                fontWeight: 700,
-                                letterSpacing: "0.06em",
-                                padding: "10px 24px",
-                                borderRadius: 999,
-                                cursor: "pointer",
-                                background: "transparent",
-                                transition: "all 0.3s",
-                            }}
-                            onMouseEnter={e => { const b = e.currentTarget; b.style.background = "#1a1033"; b.style.color = "#fff"; }}
-                            onMouseLeave={e => { const b = e.currentTarget; b.style.background = "transparent"; b.style.color = "#1a1033"; }}
-                        >
+                        <button className="about-btn">
                             More About Me
                         </button>
                     </div>
 
-                    {/* ── Timeline ── */}
-                    {/* Per row: [date 150px right-aligned] [dot on vertical line] [content] */}
-                    <div style={{ flex: 1, position: "relative" }}>
-                        {/* Vertical line at x=150 (left edge of dots) */}
+                    {/* Timeline */}
+                    <div
+                        ref={timelineRef}
+                        style={{ flex: 1, position: "relative" }}
+                    >
+                        {/* Vertical line — animated height */}
                         <div
+                            className="about-timeline-line"
                             style={{
                                 position: "absolute",
                                 left: 150,
                                 top: 6,
-                                bottom: 0,
                                 width: 1,
+                                height: 0,
                                 backgroundColor: "#c0b8e0",
+                                transition: "height 1s cubic-bezier(0.22,1,0.36,1)",
                             }}
+                            ref={lineRef}
                         />
 
                         <div style={{ display: "flex", flexDirection: "column", gap: 40 }}>
                             {experiences.map((exp, i) => (
-                                <div key={i} style={{ display: "flex", alignItems: "flex-start" }}>
-
-                                    {/* Date — right-aligned in 150px */}
-                                    <div style={{ width: 150, flexShrink: 0, textAlign: "right", paddingRight: 20, paddingTop: 2 }}>
+                                <div
+                                    key={i}
+                                    ref={(el) => { expRefs.current[i] = el; }}
+                                    data-delay={i * 150}
+                                    style={{
+                                        display: "flex",
+                                        alignItems: "flex-start",
+                                        opacity: 0,
+                                        transform: "translateX(24px)",
+                                        transition: `opacity 0.6s cubic-bezier(0.22,1,0.36,1), transform 0.6s cubic-bezier(0.22,1,0.36,1)`,
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        const dot = e.currentTarget.querySelector(".about-exp-dot-inner") as HTMLElement;
+                                        if (dot) { dot.style.backgroundColor = "#6b5fad"; dot.style.transform = "scale(1.4)"; }
+                                        const title = e.currentTarget.querySelector(".about-exp-title") as HTMLElement;
+                                        if (title) title.style.color = "#6b5fad";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        const dot = e.currentTarget.querySelector(".about-exp-dot-inner") as HTMLElement;
+                                        if (dot) { dot.style.backgroundColor = "#dddaf5"; dot.style.transform = "scale(1)"; }
+                                        const title = e.currentTarget.querySelector(".about-exp-title") as HTMLElement;
+                                        if (title) title.style.color = "#1a1033";
+                                    }}
+                                >
+                                    {/* Date */}
+                                    <div
+                                        className="about-timeline-date"
+                                        style={{ width: 150, flexShrink: 0, textAlign: "right", paddingRight: 20, paddingTop: 2 }}
+                                    >
                                         <span
                                             style={{
                                                 fontSize: 9,
@@ -293,8 +445,9 @@ export default function AboutSection() {
                                         </span>
                                     </div>
 
-                                    {/* Dot — centered on the vertical line */}
+                                    {/* Dot */}
                                     <div
+                                        className="about-exp-dot-inner"
                                         style={{
                                             flexShrink: 0,
                                             width: 14,
@@ -305,12 +458,22 @@ export default function AboutSection() {
                                             marginTop: 2,
                                             marginLeft: -7,
                                             zIndex: 1,
+                                            transition: "background-color 0.3s ease, transform 0.3s cubic-bezier(0.34,1.56,0.64,1)",
                                         }}
                                     />
 
                                     {/* Content */}
                                     <div style={{ flex: 1, paddingLeft: 18 }}>
-                                        <h4 style={{ fontSize: "0.9rem", fontWeight: 700, color: "#1a1033", marginBottom: 6 }}>
+                                        <h4
+                                            className="about-exp-title"
+                                            style={{
+                                                fontSize: "0.9rem",
+                                                fontWeight: 700,
+                                                color: "#1a1033",
+                                                marginBottom: 6,
+                                                transition: "color 0.3s ease",
+                                            }}
+                                        >
                                             {exp.title}
                                         </h4>
                                         <p style={{ fontSize: "0.78rem", color: "#4a4170", lineHeight: 1.65, margin: 0 }}>
@@ -322,11 +485,6 @@ export default function AboutSection() {
                         </div>
                     </div>
                 </div>
-
-
-
-            
-
             </div>
         </section>
     );

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 
 interface Project {
   id: number;
@@ -61,8 +61,36 @@ function ArrowCircleIcon() {
   );
 }
 
+// Custom hook for intersection observer (scroll reveal)
+function useScrollReveal(threshold = 0.15) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+
+  return { ref, visible };
+}
+
 export default function ProjectsSection() {
   const [hovered, setHovered] = useState<number | null>(null);
+
+  const headerReveal = useScrollReveal(0.1);
+  const gridReveal = useScrollReveal(0.05);
+  const btnReveal = useScrollReveal(0.1);
 
   return (
     <section
@@ -73,8 +101,120 @@ export default function ProjectsSection() {
         fontFamily: "'Inter', 'DM Sans', sans-serif",
       }}
     >
+      <style>{`
+        /* ── Floating decorations ── */
+        @keyframes floatLeft {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-10px) rotate(2deg); }
+        }
+        @keyframes floatRight {
+          0%, 100% { transform: translateY(0) rotate(0deg); }
+          50% { transform: translateY(-15px) rotate(-5deg); }
+        }
+
+        /* ── Scroll-reveal base ── */
+        .reveal-item {
+          opacity: 0;
+          transform: translateY(32px);
+          transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .reveal-item.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* Badge pop-in */
+        .badge-reveal {
+          opacity: 0;
+          transform: scale(0.85) translateY(8px);
+          transition: opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                      transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .badge-reveal.visible {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+
+        /* Heading slide-up */
+        .heading-reveal {
+          opacity: 0;
+          transform: translateY(24px);
+          transition: opacity 0.7s ease 0.15s,
+                      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+        }
+        .heading-reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* Grid card stagger */
+        .card-reveal {
+          opacity: 0;
+          transform: translateY(40px);
+          transition: opacity 0.65s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.65s cubic-bezier(0.22, 1, 0.36, 1);
+        }
+        .card-reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+        .card-reveal:nth-child(1) { transition-delay: 0s; }
+        .card-reveal:nth-child(2) { transition-delay: 0.12s; }
+        .card-reveal:nth-child(3) { transition-delay: 0.24s; }
+        .card-reveal:nth-child(4) { transition-delay: 0.36s; }
+
+        /* Button entrance */
+        .btn-reveal {
+          opacity: 0;
+          transform: translateY(16px);
+          transition: opacity 0.55s ease 0.1s, transform 0.55s ease 0.1s;
+        }
+        .btn-reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* ── Responsive grid ── */
+        .projects-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr;
+          gap: 56px 40px;
+        }
+        @media (max-width: 768px) {
+          .projects-grid {
+            grid-template-columns: 1fr;
+            gap: 40px;
+          }
+          .projects-heading {
+            font-size: 28px !important;
+          }
+          .projects-section-inner {
+            padding: 0 16px !important;
+          }
+          .projects-section-wrap {
+            padding: 64px 0 !important;
+          }
+          .squiggle-left {
+            left: 4px !important;
+          }
+          .diamond-right {
+            right: 4px !important;
+          }
+        }
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .projects-heading {
+            font-size: 34px !important;
+          }
+          .projects-section-inner {
+            padding: 0 32px !important;
+          }
+        }
+      `}</style>
+
       {/* ── Centered container ── */}
       <div
+        className="projects-section-wrap"
         style={{
           maxWidth: "1100px",
           marginLeft: "auto",
@@ -83,28 +223,19 @@ export default function ProjectsSection() {
         }}
       >
         {/* ── Header ── */}
-        <div style={{ position: "relative", textAlign: "center", marginBottom: "64px" }}>
-          <style>
-            {`
-              @keyframes floatLeft {
-                0%, 100% { transform: translateY(0) rotate(0deg); }
-                50% { transform: translateY(-10px) rotate(2deg); }
-              }
-              @keyframes floatRight {
-                0%, 100% { transform: translateY(0) rotate(0deg); }
-                50% { transform: translateY(-15px) rotate(-5deg); }
-              }
-            `}
-          </style>
-
+        <div
+          ref={headerReveal.ref}
+          style={{ position: "relative", textAlign: "center", marginBottom: "64px" }}
+        >
           {/* Squiggle — top-left */}
           <svg
-            style={{ 
-              position: "absolute", 
-              left: "calc(50% - 370px)", 
-              top: "10px", 
+            className="squiggle-left"
+            style={{
+              position: "absolute",
+              left: "calc(50% - 370px)",
+              top: "10px",
               opacity: 0.8,
-              animation: "floatLeft 4s ease-in-out infinite"
+              animation: "floatLeft 4s ease-in-out infinite",
             }}
             width="50"
             height="50"
@@ -121,47 +252,68 @@ export default function ProjectsSection() {
 
           {/* Diamond — top-right */}
           <svg
-            style={{ 
-              position: "absolute", 
-              right: "calc(50% - 380px)", 
+            className="diamond-right"
+            style={{
+              position: "absolute",
+              right: "calc(50% - 380px)",
               top: "-10px",
-              animation: "floatRight 5s ease-in-out infinite"
+              animation: "floatRight 5s ease-in-out infinite",
             }}
             width="24"
             height="24"
             viewBox="0 0 24 24"
             fill="none"
           >
-            <polygon points="12,2 14.5,9.5 22,12 14.5,14.5 12,22 9.5,14.5 2,12 9.5,9.5" fill="#fce7f3" stroke="#111827" strokeWidth="1.5" strokeLinejoin="round" />
+            <polygon
+              points="12,2 14.5,9.5 22,12 14.5,14.5 12,22 9.5,14.5 2,12 9.5,9.5"
+              fill="#fce7f3"
+              stroke="#111827"
+              strokeWidth="1.5"
+              strokeLinejoin="round"
+            />
           </svg>
 
           {/* Badge */}
           <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "6px",
-              border: "1px solid #111827",
-              borderRadius: "9999px",
-              padding: "8px 20px",
-              fontSize: "12px",
-              fontWeight: 700,
-              color: "#111827",
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              marginBottom: "24px",
-              backgroundColor: "#ffffff",
-            }}
+            className={`badge-reveal${headerReveal.visible ? " visible" : ""}`}
+            style={{ display: "inline-block", marginBottom: "24px" }}
           >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
-            MY WORKS
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "6px",
+                border: "1px solid #111827",
+                borderRadius: "9999px",
+                padding: "8px 20px",
+                fontSize: "12px",
+                fontWeight: 700,
+                color: "#111827",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                backgroundColor: "#ffffff",
+              }}
+            >
+              <svg
+                width="12"
+                height="12"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
+                <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                <circle cx="12" cy="10" r="3"></circle>
+              </svg>
+              MY WORKS
+            </div>
           </div>
 
           {/* Heading */}
           <h2
+            className={`projects-heading heading-reveal${headerReveal.visible ? " visible" : ""}`}
             style={{
               fontSize: "44px",
               fontWeight: 700,
@@ -178,16 +330,11 @@ export default function ProjectsSection() {
         </div>
 
         {/* ── 2×2 Grid ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr",
-            gap: "56px 40px",
-          }}
-        >
+        <div ref={gridReveal.ref} className="projects-grid">
           {projects.map((project) => (
             <article
               key={project.id}
+              className={`card-reveal${gridReveal.visible ? " visible" : ""}`}
               style={{ display: "flex", flexDirection: "column", cursor: "pointer" }}
               onMouseEnter={() => setHovered(project.id)}
               onMouseLeave={() => setHovered(null)}
@@ -202,6 +349,12 @@ export default function ProjectsSection() {
                   borderRadius: "16px",
                   border: "1px solid #111827",
                   backgroundColor: "#f3f4f6",
+                  transition: "box-shadow 0.3s ease, transform 0.3s ease",
+                  boxShadow:
+                    hovered === project.id
+                      ? "0 16px 40px rgba(0,0,0,0.14)"
+                      : "0 2px 8px rgba(0,0,0,0.06)",
+                  transform: hovered === project.id ? "translateY(-4px)" : "translateY(0)",
                 }}
               >
                 <img
@@ -254,7 +407,8 @@ export default function ProjectsSection() {
                     border: "none",
                     padding: 0,
                     cursor: "pointer",
-                    transition: "opacity 0.2s",
+                    transition: "opacity 0.2s, gap 0.2s",
+                    gap: hovered === project.id ? "4px" : "0px",
                   }}
                   onMouseEnter={(e) => (e.currentTarget.style.opacity = "0.7")}
                   onMouseLeave={(e) => (e.currentTarget.style.opacity = "1")}
@@ -268,7 +422,11 @@ export default function ProjectsSection() {
         </div>
 
         {/* ── See All Works ── */}
-        <div style={{ display: "flex", justifyContent: "center", marginTop: "64px" }}>
+        <div
+          ref={btnReveal.ref}
+          className={`btn-reveal${btnReveal.visible ? " visible" : ""}`}
+          style={{ display: "flex", justifyContent: "center", marginTop: "64px" }}
+        >
           <button
             style={{
               fontSize: "15px",

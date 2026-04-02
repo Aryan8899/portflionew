@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect } from "react";
+import { useRef, useEffect, useState } from "react";
 
 const steps = [
   {
@@ -51,8 +51,35 @@ const steps = [
 
 const tools = ["Spotify", "Zapier", "Readkit", "Slack", "Chat GPT", "Notion", "Figma", "Photoshop", "Framer"];
 
+// Scroll reveal hook
+function useScrollReveal(threshold = 0.12) {
+  const ref = useRef<HTMLDivElement>(null);
+  const [visible, setVisible] = useState(false);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [threshold]);
+  return { ref, visible };
+}
+
 export default function WorkflowSection() {
   const marqueeRef = useRef<HTMLDivElement>(null);
+  const headerReveal = useScrollReveal(0.1);
+  const cardsReveal = useScrollReveal(0.05);
+  const marqueeReveal = useScrollReveal(0.05);
+  const [hoveredCard, setHoveredCard] = useState<number | null>(null);
+  const [arrowHovered, setArrowHovered] = useState(false);
 
   useEffect(() => {
     let frame: number;
@@ -84,31 +111,159 @@ export default function WorkflowSection() {
         overflow: "hidden",
       }}
     >
+      <style>{`
+        /* ── Floating stars ── */
+        @keyframes floatStar1 {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-6px) scale(1.05); }
+        }
+        @keyframes floatStar2 {
+          0%, 100% { transform: translateY(0) scale(1); }
+          50% { transform: translateY(-4px) scale(1.1); }
+        }
+
+        /* ── Scroll reveal: header ── */
+        .wf-badge-reveal {
+          opacity: 0;
+          transform: scale(0.85) translateY(8px);
+          transition: opacity 0.5s cubic-bezier(0.34, 1.56, 0.64, 1),
+                      transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+        .wf-badge-reveal.visible {
+          opacity: 1;
+          transform: scale(1) translateY(0);
+        }
+
+        .wf-heading-reveal {
+          opacity: 0;
+          transform: translateY(22px);
+          transition: opacity 0.7s ease 0.15s,
+                      transform 0.7s cubic-bezier(0.22, 1, 0.36, 1) 0.15s;
+        }
+        .wf-heading-reveal.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* ── Cards staggered ── */
+        .wf-card {
+          opacity: 0;
+          transform: translateY(36px);
+          transition: opacity 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                      transform 0.6s cubic-bezier(0.22, 1, 0.36, 1),
+                      box-shadow 0.25s ease;
+        }
+        .wf-card.visible { opacity: 1; transform: translateY(0); }
+        .wf-card:nth-child(1) { transition-delay: 0s; }
+        .wf-card:nth-child(2) { transition-delay: 0.12s; }
+        .wf-card:nth-child(3) { transition-delay: 0.24s; }
+
+        /* Card hover lift */
+        .wf-card-inner {
+          transition: transform 0.28s cubic-bezier(0.22, 1, 0.36, 1),
+                      box-shadow 0.28s ease;
+        }
+        .wf-card-inner:hover {
+          transform: translateY(-5px);
+          box-shadow: 0 12px 32px rgba(0,0,0,0.10);
+        }
+
+        /* Icon circle pop on card hover */
+        .wf-icon-circle {
+          transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1),
+                      background-color 0.2s ease;
+        }
+        .wf-card-inner:hover .wf-icon-circle {
+          transform: scale(1.12) rotate(-6deg);
+        }
+
+        /* ── Marquee fade in ── */
+        .wf-marquee-wrap {
+          opacity: 0;
+          transform: translateY(20px);
+          transition: opacity 0.65s ease 0.1s, transform 0.65s ease 0.1s;
+        }
+        .wf-marquee-wrap.visible {
+          opacity: 1;
+          transform: translateY(0);
+        }
+
+        /* ── Arrow button pulse ── */
+        @keyframes arrowPulse {
+          0%, 100% { box-shadow: 0 2px 10px rgba(0,0,0,0.10); }
+          50% { box-shadow: 0 4px 18px rgba(0,0,0,0.18); }
+        }
+        .wf-arrow-btn {
+          transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1),
+                      box-shadow 0.25s ease;
+          animation: arrowPulse 3s ease-in-out infinite;
+        }
+        .wf-arrow-btn:hover {
+          transform: translateY(-50%) scale(1.18) !important;
+          box-shadow: 0 6px 22px rgba(0,0,0,0.18) !important;
+        }
+
+        /* ── Responsive ── */
+        .wf-grid {
+          display: grid;
+          grid-template-columns: 1fr 1fr 1fr;
+          gap: 18px;
+          position: relative;
+        }
+        @media (max-width: 768px) {
+          .wf-grid {
+            grid-template-columns: 1fr;
+            gap: 16px;
+          }
+          .wf-arrow-btn {
+            display: none !important;
+          }
+          .wf-section-heading {
+            font-size: 24px !important;
+          }
+          .wf-inner {
+            padding: 0 16px !important;
+          }
+          .wf-section-wrap {
+            padding: 56px 0 48px !important;
+          }
+          .wf-stars {
+            right: 8px !important;
+          }
+        }
+        @media (min-width: 769px) and (max-width: 1024px) {
+          .wf-grid {
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+          }
+          .wf-section-heading {
+            font-size: 28px !important;
+          }
+          .wf-inner {
+            padding: 0 24px !important;
+          }
+        }
+      `}</style>
+
       {/* ── Centered wrapper ── */}
-      <div style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto", padding: "0 32px" }}>
+      <div
+        className="wf-inner"
+        style={{ maxWidth: "860px", marginLeft: "auto", marginRight: "auto", padding: "0 32px" }}
+      >
 
         {/* ── Header ── */}
-        <div style={{ position: "relative", textAlign: "center", marginBottom: "48px" }}>
-
-          {/* Sparkles top-right — 4-pointed star style */}
-          <div style={{ position: "absolute", right: "0", top: "-10px", display: "flex", alignItems: "flex-start", gap: "4px" }}>
-            <style>
-              {`
-                @keyframes floatStar1 {
-                  0%, 100% { transform: translateY(0) scale(1); }
-                  50% { transform: translateY(-6px) scale(1.05); }
-                }
-                @keyframes floatStar2 {
-                  0%, 100% { transform: translateY(0) scale(1); }
-                  50% { transform: translateY(-4px) scale(1.1); }
-                }
-              `}
-            </style>
-            {/* Big star */}
+        <div
+          ref={headerReveal.ref}
+          style={{ position: "relative", textAlign: "center", marginBottom: "48px" }}
+        >
+          {/* Sparkles top-right */}
+          <div
+            className="wf-stars"
+            style={{ position: "absolute", right: "0", top: "-10px", display: "flex", alignItems: "flex-start", gap: "4px" }}
+          >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="#ffffff" style={{ marginTop: "12px", animation: "floatStar1 4s ease-in-out infinite" }}>
               <path d="M12 1 C12 8 8 12 1 12 C8 12 12 16 12 23 C12 16 16 12 23 12 C16 12 12 8 12 1 Z" stroke="#1a1a2e" strokeWidth="1.5" strokeLinejoin="round" />
             </svg>
-            {/* Small star */}
             <svg width="14" height="14" viewBox="0 0 24 24" fill="#ffffff" style={{ animation: "floatStar2 3s ease-in-out infinite" }}>
               <path d="M12 1 C12 8 8 12 1 12 C8 12 12 16 12 23 C12 16 16 12 23 12 C16 12 12 8 12 1 Z" stroke="#1a1a2e" strokeWidth="2" strokeLinejoin="round" />
             </svg>
@@ -116,29 +271,34 @@ export default function WorkflowSection() {
 
           {/* Badge */}
           <div
-            style={{
-              display: "inline-flex",
-              alignItems: "center",
-              gap: "7px",
-              border: "1px solid #1a1a2e",
-              borderRadius: "9999px",
-              padding: "7px 20px",
-              fontSize: "10.5px",
-              fontWeight: 600,
-              color: "#374151",
-              letterSpacing: "0.13em",
-              textTransform: "uppercase",
-              marginBottom: "22px",
-              backgroundColor: "#ffffff",
-              boxShadow: "0 1px 6px rgba(0,0,0,0.08)",
-            }}
+            className={`wf-badge-reveal${headerReveal.visible ? " visible" : ""}`}
+            style={{ display: "inline-block", marginBottom: "22px" }}
           >
-            <span style={{ fontSize: "13px", lineHeight: 1 }}>✱</span>
-            Process
+            <div
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: "7px",
+                border: "1px solid #1a1a2e",
+                borderRadius: "9999px",
+                padding: "7px 20px",
+                fontSize: "10.5px",
+                fontWeight: 600,
+                color: "#374151",
+                letterSpacing: "0.13em",
+                textTransform: "uppercase",
+                backgroundColor: "#ffffff",
+                boxShadow: "0 1px 6px rgba(0,0,0,0.08)",
+              }}
+            >
+              <span style={{ fontSize: "13px", lineHeight: 1 }}>✱</span>
+              Process
+            </div>
           </div>
 
           {/* Heading */}
           <h2
+            className={`wf-section-heading wf-heading-reveal${headerReveal.visible ? " visible" : ""}`}
             style={{
               fontSize: "36px",
               fontWeight: 700,
@@ -155,120 +315,124 @@ export default function WorkflowSection() {
         </div>
 
         {/* ── 3 Cards ── */}
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "1fr 1fr 1fr",
-            gap: "18px",
-            position: "relative",
-          }}
-        >
+        <div ref={cardsReveal.ref} className="wf-grid">
           {steps.map((step, i) => (
             <div
               key={step.id}
-              style={{
-                backgroundColor: step.bg,
-                border: "1px solid #1a1a2e",
-                borderRadius: "18px",
-                padding: "24px 24px 32px",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0",
-                position: "relative",
-                minHeight: "260px",
-              }}
+              className={`wf-card${cardsReveal.visible ? " visible" : ""}`}
             >
-              {/* Number top-right */}
-              <span
-                style={{
-                  position: "absolute",
-                  top: "22px",
-                  right: "22px",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  color: "#374151",
-                  opacity: 0.55,
-                }}
-              >
-                {step.id}
-              </span>
-
-              {/* Icon circle */}
               <div
+                className="wf-card-inner"
                 style={{
-                  width: "54px",
-                  height: "54px",
-                  borderRadius: "50%",
+                  backgroundColor: step.bg,
                   border: "1px solid #1a1a2e",
-                  backgroundColor: "#ffffff",
+                  borderRadius: "18px",
+                  padding: "24px 24px 32px",
                   display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  marginBottom: "24px",
-                  flexShrink: 0,
+                  flexDirection: "column",
+                  gap: "0",
+                  position: "relative",
+                  minHeight: "260px",
                 }}
               >
-                {step.icon}
-              </div>
-
-              {/* Title */}
-              <h3
-                style={{
-                  fontSize: "15.5px",
-                  fontWeight: 700,
-                  color: "#111827",
-                  marginBottom: "12px",
-                  lineHeight: 1.3,
-                }}
-              >
-                {step.title}
-              </h3>
-
-              {/* Description */}
-              <p
-                style={{
-                  fontSize: "12.5px",
-                  color: "#6b7280",
-                  lineHeight: 1.75,
-                  margin: 0,
-                }}
-              >
-                {step.description}
-              </p>
-
-              {/* Arrow button — only on last card, sticks out right edge */}
-              {i === steps.length - 1 && (
-                <div
+                {/* Number top-right */}
+                <span
                   style={{
                     position: "absolute",
-                    right: "-20px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    width: "40px",
-                    height: "40px",
+                    top: "22px",
+                    right: "22px",
+                    fontSize: "13px",
+                    fontWeight: 600,
+                    color: "#374151",
+                    opacity: 0.55,
+                  }}
+                >
+                  {step.id}
+                </span>
+
+                {/* Icon circle */}
+                <div
+                  className="wf-icon-circle"
+                  style={{
+                    width: "54px",
+                    height: "54px",
                     borderRadius: "50%",
-                    backgroundColor: "#ffffff",
                     border: "1px solid #1a1a2e",
+                    backgroundColor: "#ffffff",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
-                    zIndex: 10,
-                    cursor: "pointer",
+                    marginBottom: "24px",
+                    flexShrink: 0,
                   }}
                 >
-                  <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
-                    <path d="M3 7.5h9M9 4l3.5 3.5L9 11" stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-                  </svg>
+                  {step.icon}
                 </div>
-              )}
+
+                {/* Title */}
+                <h3
+                  style={{
+                    fontSize: "15.5px",
+                    fontWeight: 700,
+                    color: "#111827",
+                    marginBottom: "12px",
+                    lineHeight: 1.3,
+                  }}
+                >
+                  {step.title}
+                </h3>
+
+                {/* Description */}
+                <p
+                  style={{
+                    fontSize: "12.5px",
+                    color: "#6b7280",
+                    lineHeight: 1.75,
+                    margin: 0,
+                  }}
+                >
+                  {step.description}
+                </p>
+
+                {/* Arrow button — only on last card */}
+                {i === steps.length - 1 && (
+                  <div
+                    className="wf-arrow-btn"
+                    style={{
+                      position: "absolute",
+                      right: "-20px",
+                      top: "50%",
+                      transform: "translateY(-50%)",
+                      width: "40px",
+                      height: "40px",
+                      borderRadius: "50%",
+                      backgroundColor: "#ffffff",
+                      border: "1px solid #1a1a2e",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      boxShadow: "0 2px 10px rgba(0,0,0,0.1)",
+                      zIndex: 10,
+                      cursor: "pointer",
+                    }}
+                  >
+                    <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+                      <path d="M3 7.5h9M9 4l3.5 3.5L9 11" stroke="#374151" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
             </div>
           ))}
         </div>
       </div>
 
       {/* ── Marquee ── */}
-      <div style={{ marginTop: "72px" }}>
+      <div
+        ref={marqueeReveal.ref}
+        className={`wf-marquee-wrap${marqueeReveal.visible ? " visible" : ""}`}
+        style={{ marginTop: "72px" }}
+      >
         <p
           style={{
             textAlign: "center",
