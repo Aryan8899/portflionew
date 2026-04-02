@@ -111,6 +111,7 @@ export default function HeroSection() {
                 fontFamily: FONT,
                 overflow: "hidden",
                 padding: "60px 0",
+                borderBottom: "1.5px solid #1a1a3e",
             }}>
                 <div style={{
                     maxWidth: "1200px",
@@ -140,10 +141,10 @@ export default function HeroSection() {
                             color: "#1a1a3e", lineHeight: 1.08, margin: 0,
                             letterSpacing: "-0.025em",
                         }}>
-                            I&apos;m Jonathan Meelo,
+                            I&apos;m Aryan Pandita,
                             <br />
                             <span style={{ position: "relative", display: "inline-block" }}>
-                                a product designer.
+                                a Blockchain and Full stack Engineer.
                                 <svg viewBox="0 0 300 12" preserveAspectRatio="none" style={{
                                     position: "absolute", bottom: "-6px", left: 0, width: "100%", height: "10px",
                                 }}>
@@ -153,7 +154,7 @@ export default function HeroSection() {
                         </h1>
 
                         <p style={{ fontSize: "0.97rem", color: "#4a4a6e", lineHeight: 1.7, margin: 0 }}>
-                            I&apos;m a freelance product designer based in London.<br />
+                            I&apos;m a Blockchain and Full stack Engineer based in India.<br />
                             I&apos;m very passionate about the work that I do.
                         </p>
 

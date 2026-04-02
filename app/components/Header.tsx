@@ -20,17 +20,21 @@ const XIcon = () => (
   </svg>
 );
 
-const FlowerIcon = () => (
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" width="15" height="15">
-    <circle cx="12" cy="12" r="2.5" />
-    <ellipse cx="12" cy="5.5" rx="2" ry="3" />
-    <ellipse cx="12" cy="18.5" rx="2" ry="3" />
-    <ellipse cx="5.5" cy="12" rx="3" ry="2" />
-    <ellipse cx="18.5" cy="12" rx="3" ry="2" />
-    <ellipse cx="7.4" cy="7.4" rx="2" ry="3" transform="rotate(-45 7.4 7.4)" />
-    <ellipse cx="16.6" cy="16.6" rx="2" ry="3" transform="rotate(-45 16.6 16.6)" />
-    <ellipse cx="16.6" cy="7.4" rx="2" ry="3" transform="rotate(45 16.6 7.4)" />
-    <ellipse cx="7.4" cy="16.6" rx="2" ry="3" transform="rotate(45 7.4 16.6)" />
+const DribbbleIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.8"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    width="15"
+    height="15"
+  >
+    <circle cx="12" cy="12" r="10" />
+    <path d="M19.13 5.09C15.22 9.14 10 10.44 2.25 10.94" />
+    <path d="M21.75 12.84c-6.62-1.41-12.14 1-16.38 6.32" />
+    <path d="M8.56 2.75c4.37 6 6 9.42 8 17.72" />
   </svg>
 );
 
@@ -79,17 +83,19 @@ function SocialBtn({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        border: `1.5px solid ${hovered ? "#6366f1" : "#222222"}`,
+        border: "1.5px solid #1a1a1a",
         borderRadius: "14px",
-        color: hovered ? "#6366f1" : "#111111",
+        color: hovered ? "#6366f1" : "#1a1a1a",
         background: "#ffffff",
         textDecoration: "none",
         cursor: "pointer",
         flexShrink: 0,
         boxSizing: "border-box",
-        transition: "border-color 0.15s, color 0.15s, outline-color 0.15s",
-        outline: `1.5px solid ${hovered ? "#6366f1" : "#222222"}`,
-        outlineOffset: "-4px",
+        transition: "transform 0.1s ease, box-shadow 0.1s ease, color 0.15s ease",
+        boxShadow: hovered 
+          ? "0px 1px 0px #e0e7ff, 0px 1px 0px 1.5px #1a1a1a"
+          : "0px 3px 0px #e0e7ff, 0px 3px 0px 1.5px #1a1a1a",
+        transform: hovered ? "translateY(2px)" : "none",
       }}
     >
       {icon}
@@ -103,7 +109,7 @@ export default function Header() {
 
   const socialLinks = [
     { icon: <XIcon />, href: "#", label: "X (Twitter)" },
-    { icon: <FlowerIcon />, href: "#", label: "Flower" },
+    { icon: <DribbbleIcon />, href: "#", label: "Dribbble" },
     { icon: <InstagramIcon />, href: "#", label: "Instagram" },
   ];
 
